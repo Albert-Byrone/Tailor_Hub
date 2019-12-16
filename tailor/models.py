@@ -52,3 +52,27 @@ class Profile(models.Model):
     def search_profile(cls,name):
         return cls.objects.filter(user__username__icontains=name).all()
 
+class Item(models.Model):
+    title = models.CharField(max_length=200)
+    price = models.FloatField()
+    discount_price = models.FloatField(null=True,blank=True,default="0")
+    category = models.CharField(choices=CATEGORY_CHOICES,max_length=2,default="SU")
+    label = models.CharField(choices=LABEL_CHOICES,max_length=1,default="P")
+    photo = models.ImageField(null=True,blank=True)
+    description = models.TextField(null=True,blank=True)
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='posts')
+    created = models.DateTimeField(auto_now_add=True, null=True)
+
+    def get_all_comments(self):
+        return self.comments.all()
+
+    @classmethod
+    def search_term(cls,searchterm):
+        search = Item.objects.filter(Q(title__icontains=searchterm)|Q(description__icontains=searchterm)|Q(category__icontains=searchterm))
+        return search
+
+
+    def __str__(self):
+        return f"{self.title}"
+
+
