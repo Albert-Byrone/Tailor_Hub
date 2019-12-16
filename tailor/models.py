@@ -1,3 +1,13 @@
+CATEGORY_CHOICES=(
+    ('SU','Suits'),
+    ('TR','Trousers'),
+    ('CO','Coats'),
+    ('DR','Dresses')
+)
+LABEL_CHOICES=(
+    ('P','primary'),
+    ('S','secondary'),
+    ('D','danger')
 )
 class Profile(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='profile')
