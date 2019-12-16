@@ -37,3 +37,25 @@ def signup(request):
         form = SignUpForm()
     return render(request, 'registration/registration_form.html', {'form': form})
 
+def home(request):
+    items = Item.objects.all()
+    users = User.objects.exclude(id=request.user.id)
+    form = PostForm(request.POST,request.FILES)
+    if request.method == "POST":
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.user = request.user.profile
+            post.save()
+            return HttpResponseRedirect(request.path_info)
+        else:
+            form = PostForm()
+      
+    context = {
+        'items': items,
+        'form': form,
+        'users': users,
+        
+       
+    }
+    return render(request,'home-page.html',context)
+
