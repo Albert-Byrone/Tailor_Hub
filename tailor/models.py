@@ -151,3 +151,11 @@ class Payment(models.Model):
     def __str__(self):
         return f"{ user.username }"
 
+
+class Coupon(models.Model):
+    code  =  models.CharField(max_length=15)
+    amount = models.FloatField(default=50)
+
+    def __str__(self):
+        return f"{self.code }"
+
