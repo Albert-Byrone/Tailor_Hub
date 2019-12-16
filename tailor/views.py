@@ -198,6 +198,7 @@ class PaymentView(View):
       
        
 
+
 class OrderSummaryView(LoginRequiredMixin, View):
     def get(self,*args,**kwargs):
 
@@ -287,3 +288,113 @@ def add_to_cart(request, pk):
         order.items.add(order_item)
         messages.info(request,"Addded successfully" )
         return redirect("tailor:order-summary")
+
+login_required(login_url='/accounts/login')
+def remove_from_cart(request,pk):
+    item = get_object_or_404(Item,pk=pk)
+    order_qs = Order.objects.filter(user= request.user,is_ordered=False)
+    if order_qs.exists():
+        order = order_qs[0]\
+        # check if the item exist in thecart
+        if order.items.filter(item__id=item.id).exists():
+            order_item = OrderItem.objects.filter(
+                item=item,
+                user=request.user,
+                is_ordered=False
+            )[0]
+            order.items.remove(order_item)
+            messages.info(request,"Removed successfully" )
+            return redirect("tailor:order-summary")
+        else:
+            messages.info(request,"No order with that order item")
+            return redirect("tailor:product",pk=pk)     
+    else:
+        messages.info(request,"You do not have an active order ")
+        return redirect("tailor:product",pk=pk)
+
+
+
+login_required(login_url='/accounts/login')
+def remove_single_item_from_cart(request,pk):
+    item = get_object_or_404(Item,pk=pk)
+    order_qs = Order.objects.filter(user= request.user,is_ordered=False)
+    if order_qs.exists():
+        order = order_qs[0]\
+        # check if the item exist in thecart
+        if order.items.filter(item__id=item.id).exists():
+            order_item = OrderItem.objects.filter(
+                item=item,
+                user=request.user,
+                is_ordered=False
+            )[0]
+            if order_item.quantity >1:
+                order_item.quantity-=1
+                order_item.save()
+            else:
+                order.items.remove(order_item)
+            messages.info(request,"Item quantity updated " )
+            return redirect("tailor:order-summary")
+        else:
+            messages.info(request,"No order with that order item")
+            return redirect("tailor:product")     
+    else:
+        messages.info(request,"You do not have an active order ")
+        return redirect("tailor:product")
+def get_coupon(request, code ):
+    try:
+        coupon = Coupon.objects.get(code=code)
+        return coupon
+    except ObjectDoesNotExist:
+        messages.info(request,"Invalid Coupon ")
+        return redirect("tailor:checkout")
+
+def add_coupon(request):
+    if request.method == "POST":
+        form = CouponForm(request.POST or None)
+        if form.is_valid():  
+                try:
+                    code = form.cleaned_data.get('code')
+                    print(code,'eeeeeeeeeeeeeeeeeeeeeee')
+                    order = Order.objects.get(user=request.user,is_ordered=False)
+                    order.coupon = get_coupon(request,code)
+                    order.save()
+                    messages.success(request,"Coupon successfully Applied  ")
+                    return redirect("tailor:checkout")
+
+                except ObjectDoesNotExist:
+                    messages.info(request,"You do not have an active order ")
+                    return redirect("tailor:checkout")
+        return None
+                        
+
+class RequestRefundView(View):
+    def get(self,*args,**kwargs):
+        form = RefundForm()
+        context = {
+            'form':form
+        }
+        return render(self.request,"request_refund.html",locals())
+    def post(self,*args,**kwargs):
+        form = CouponForm(self.request.POST or None)
+        if form.is_valid():
+            ref_code =form.cleaned_data.get('ref_code')
+            message = form.cleaned_data.get('message')
+            email = form.cleaned_data.get('email')
+
+            #edit refund
+            try:
+                order = Order.objects.get(ref_code=ref_code)
+                order.refund_requested =  True
+                order.save()
+
+                #store the refund
+                refund = Refund()
+                refund.order = order
+                refund.reason = message
+                refund.email=email
+                refund.save()
+                messages.info(self.request,"Your order is successfull")
+                return redirect("tailor:request-refund")
+            except ObjectDoesNotExist:
+                messages.info(self.request,"This order doesnt exist")
+                return redirect("tailor:request-refund")
