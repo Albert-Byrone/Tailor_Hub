@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container dark-grey-text mt-5">
+
+    <div class="row wow fadeIn">
+
+  
+      <div class="col-md-6 mb-4">
+        <img src="{{ object.photo.url  }}" class="img-fluid" alt="">
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="p-4">
+
+          <div class="mb-3">
+            <a href="">
+              <span class="badge purple mr-1">{{object.get_category_display}}</span>
+            </a>
+          </div>
+          <p class="lead">
+            {% if object.discount_price %}
+            <span class="mr-1">
+                <del>${{ object.price  }}</del>
+            </span>
+            <span> ${{object.discount_price }}</span>
+            {% else %}
+                <del>${{ object.price  }}</del>
+            {% endif %}
+          
+          </p>
+
+          <p class="lead font-weight-bold">Description</p>
+
+          <p>{{object.description}}</p>
+          <a href="{% url 'tailor:add-to-cart' object.pk %}" class="btn btn-primary btn-md my-0 p">Add to cart
+              <i class="fas fa-shopping-cart ml-1"></i>
+            </a>
+
+            <a href="{% url 'tailor:remove-from-cart' object.pk %}" class="btn btn-danger btn-md my-0 p">Remove  cart
+                <i class="fas fa-shopping-cart ml-1"></i>
+              </a>
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div class="row d-flex justify-content-center wow fadeIn">
+      <div class="col-md-6 text-center">
+        <!-- Comment section for each item -->
+        <!-- <h4 class="my-4 h4">Additional information</h4>
+
+        <p>Additionl description.</p> -->
+      </div>
+    </div>
+    <div class="row wow fadeIn">
+      <div class="col-lg-4 col-md-12 mb-4">
+        <img src="" class="img-fluid" alt="">
+      </div>
+      <div class="col-lg-4 col-md-6 mb-4">
+        <img src="#" class="img-fluid" alt="">
+      </div>
+      <div class="col-lg-4 col-md-6 mb-4">
+        <img src="#" class="img-fluid" alt="">
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
