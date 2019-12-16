@@ -106,3 +106,39 @@ class OrderItem(models.Model):
             return self.get_total_discount_price()
         return  self.get_total_price()
 
+
+class Order(models.Model):
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    ref_code = models.CharField(max_length=30)
+    is_ordered = models.BooleanField(default=False)
+    items = models.ManyToManyField(OrderItem)
+    start_date = models.DateTimeField(auto_now_add=True)
+    ordered_date = models.DateTimeField()
+    billing_address = models.ForeignKey('BillingAddress',on_delete=models.SET_NULL,null=True,blank=True)
+    payment = models.ForeignKey('Payment',on_delete=models.SET_NULL,null=True,blank=True)
+    coupon = models.ForeignKey('Coupon',on_delete=models.SET_NULL,null=True,blank=True)
+    being_delivered = models.BooleanField(default=False)
+    received = models.BooleanField(default=False)
+    refund_requested = models.BooleanField(default=False)
+    refund_approved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username}"
+
+    def get_total(self):
+        total = 0
+        for order_item in self.items.all():
+            total += order_item.get_final_price()
+       
+        return total
+
+class BillingAddress(models.Model):
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    street_address = models.CharField(max_length=50)
+    apartment_address=models.CharField(max_length=50)
+    country = CountryField(multiple=False,default="Kenya")
+    zipcode = models.CharField(max_length=50)
+    
+    def __str__(self):
+        return f"{self.user.username }"
+
