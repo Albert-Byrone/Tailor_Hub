@@ -1,23 +1,20 @@
-# Insta-Copy 
+# Tailor_Hub
 ## Author  
   
->[Albert-Byrone](https://github.com/Albert-Byrone/Insta-Copy.git)  
+>[Albert-Byrone](https://github.com/Albert-Byrone/Tailor_Hub)  
   
 # Description  
-This is a Django application that allow users to post pictures,like and comment on them whan having an account.
+This is a Django application that allow Tailors to post their different designs ,create accounts ,add their contact information on individual profile for easy communication
   
 ##  Live Link  
-Click https://django-heroku-album.herokuapp.com/ to visit the webite
-## Screenshots 
-###### Home page
+Click https://tailorhubb.herokuapp.com/ to visit the webite
 
 ## User Story  
   
 * Sign in to the application to start using.
-* Upload my pictures to the application.  
-* See my profile with all my pictures.
-* Like a picture and leave a comment on it.
-* Follow other users and see their pictures on my timeline.
+* Upload different designs  to the application.  
+* See my profile with all my designs.
+* See my contact information on my profile.
 
 ## Setup and Installation  
 To get the project .......  
@@ -28,7 +25,7 @@ https://github.com/Albert-Byrone/Insta-Copy.git
 ```
 ##### Navigate into the folder and install requirements  
  ```bash 
-cd INsta-Copy pip install -r requirements.txt 
+cd Tailor_Huby pip install -r requirements.txt 
 ```
 ##### Install and activate Virtual  
  ```bash 
