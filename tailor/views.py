@@ -210,3 +210,47 @@ class OrderSummaryView(LoginRequiredMixin, View):
         except ObjectDoesNotExist:
             messages.error(self.request,"You do not have an active order")
             return redirect("/")
+
+@login_required(login_url='/accounts/login')
+def profile(request,**kwargs):
+    # profile = User.objects.filter(username=username)
+    usr_profile = get_object_or_404(Profile,pk=kwargs["id"])
+
+    print(usr_profile)
+    images = Item.objects.filter(user=kwargs['id'])
+    if request.method == "POST":
+        user_form = UpdateUserForm(request.POST, instance=request.user)
+        prof_form = UpdateUserProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        if user_form.is_valid() and prof_form.is_valid():
+            user_form.save()
+            prof_form.save()
+            return HttpResponseRedirect(request.path_info)
+    else:
+        user_form = UpdateUserForm(instance=request.user)
+        prof_form = UpdateUserProfileForm(instance=request.user.profile)
+    params = {
+        'user_form': user_form,
+        'prof_form': prof_form,
+        'images': images,  
+        'profile':profile, 
+    }
+    return render(request, 'profile/profile.html', locals())
+
+
+@login_required(login_url='/accounts/login')
+def user_profile(request, username):
+    user_prof = get_object_or_404(User, username=username)
+    if request.user == user_prof:
+        return redirect('profile', username=request.user.username)
+    user_posts = user_prof.profile.posts.all()
+    users = User.objects.get(username=username)
+    params = {
+        'user_prof': user_prof,
+        'user_posts': user_posts,
+    }
+    return render(request, 'profile/user_profile.html', params)
+
+# class HomeView(ListView):
+#     # model = Item
+#     # template_name = 'home-page.html'
+
