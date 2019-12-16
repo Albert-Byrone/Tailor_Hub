@@ -1,0 +1,9 @@
+.env
+virtual/
+__pycache__
+*.pyc
+db.sqlite3
+.idea
+.vscode
+*.log
+
