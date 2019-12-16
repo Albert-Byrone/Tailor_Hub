@@ -254,3 +254,36 @@ def user_profile(request, username):
 #     # model = Item
 #     # template_name = 'home-page.html'
 
+
+class ItemDetailView(DetailView):
+    model = Item
+    template_name = 'product-page.html'
+
+
+login_required(login_url='/accounts/login')
+def add_to_cart(request, pk):
+    item = get_object_or_404(Item,pk=pk)
+    order_item,created = OrderItem.objects.get_or_create(
+        item=item,
+        user=request.user,
+        is_ordered=False
+        )
+    order_qs = Order.objects.filter(user= request.user,is_ordered=False)
+    if order_qs.exists():
+        order = order_qs[0]
+        # check if the item exist in thecart
+        if order.items.filter(item__id=item.id).exists():
+            order_item.quantity+=1
+            order_item.save()
+            messages.info(request,"Quantity  successfully updated" )
+            return redirect("tailor:order-summary")
+        else:
+            messages.info(request,"Addded successfully")
+            order.items.add(order_item)
+            return redirect("tailor:order-summary")
+    else:
+        ordered_date = timezone.now()
+        order= Order.objects.create(user=request.user,ordered_date=ordered_date)
+        order.items.add(order_item)
+        messages.info(request,"Addded successfully" )
+        return redirect("tailor:order-summary")
