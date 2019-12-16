@@ -77,3 +77,38 @@ class CheckoutView(View):
             return redirect("tailor:checkout")
         
         
+    @login_required(login_url='/accounts/login')
+    def post(self,*args,**kwargs):
+        form= CheckoutForm(self.request.POST or None)
+        try:
+            order = Order.objects.get(user=self.request.user, is_ordered=False)   
+            if form.is_valid():
+                street_address= form.cleaned_data.get('street_address')
+                apartment_address= form.cleaned_data.get('apartment_address')
+                country= form.cleaned_data.get('country')
+                zipcode= form.cleaned_data.get('zipcode')
+                same_billing_address= form.cleaned_data.get('same_billing_address')
+                save_info= form.cleaned_data.get('save_info')
+                payment_option= form.cleaned_data.get('payment_option')
+                billing_address  = BillingAddress(
+                    user = self.request.user,
+                    street_address = street_address,
+                    apartment_address = apartment_address,
+                    country = country,
+                    zipcode = zipcode
+                )
+                billing_address.save()
+                order.billing_address = billing_address
+                order.save()
+
+                if payment_option == 'S':
+                    return redirect('tailor:payment',payment_option='stripe')
+                elif payment_option == 'P':
+                    return redirect('tailor:payment',payment_option='paypal')
+                else:
+                    messages.error(self.request,"Invalid payment option selected ")
+                    return redirect('tailor:checkout')   
+        except ObjectDoesNotExist:
+            messages.error(self.request,"You do not have an active order")
+            return redirect("tailor:order-summary")
+
