@@ -59,3 +59,21 @@ def home(request):
     }
     return render(request,'home-page.html',context)
 
+
+class CheckoutView(View):
+    def get(self,*args,**kwargs):
+        try:
+            order = Order.objects.get(user=self.request.user,is_ordered=False)
+            form= CheckoutForm()
+            Couponform=CouponForm()
+            context = {
+                'form': form,
+                'Couponform':'Couponform',
+                'order':order
+            }
+            return render(self.request,'checkout.html',locals())
+        except ObjectDoesNotExist:
+            messages.info(self.request,"You do not have an active order ")
+            return redirect("tailor:checkout")
+        
+        
