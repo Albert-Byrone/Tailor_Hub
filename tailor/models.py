@@ -76,3 +76,9 @@ class Item(models.Model):
         return f"{self.title}"
 
 
+class Comment(models.Model):
+    comment = models.TextField()
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
+    created = models.DateTimeField(auto_now_add=True, null=True)
+
