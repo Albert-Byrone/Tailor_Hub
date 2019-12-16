@@ -197,3 +197,16 @@ class PaymentView(View):
             return redirect("/")
       
        
+
+class OrderSummaryView(LoginRequiredMixin, View):
+    def get(self,*args,**kwargs):
+
+        try:
+            order = Order.objects.get(user=self.request.user, is_ordered=False)
+            context = {
+                'order':order
+            }
+            return render(self.request,'order_summary.html',locals())
+        except ObjectDoesNotExist:
+            messages.error(self.request,"You do not have an active order")
+            return redirect("/")
