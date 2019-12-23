@@ -23,12 +23,15 @@ LABEL_CHOICES=(
 )
 class Profile(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='profile')
-    prof_pic = models.ImageField(upload_to='images/',default='text.png')
+    prof_pic = models.ImageField(upload_to='images/',default='./img/avator.png')
     bio = models.TextField(max_length=50,default='this is my bio')
     name = models.CharField(blank=True,max_length=120)
     contact =models.PositiveIntegerField(null=True,blank=True)
     email = models.EmailField()
     location = models.CharField(max_length=60, blank=True)
+    stripe_customer_id = models.CharField(max_length=50, blank=True, null=True)
+    one_click_purchasing = models.BooleanField(default=False)
+
 
     def __str__(self):
         return f'{self.user.username} Profile'
@@ -36,7 +39,7 @@ class Profile(models.Model):
     @receiver(post_save,sender=User)
     def create_user_profile(sender,instance,created,**kwargs):
         if created:
-            Profile.objects.create(user=instance)
+            userprofile = Profile.objects.create(user=instance)
 
     @receiver(post_save,sender=User)
     def save_user_profile(sender,instance,created,**kwargs):
@@ -123,13 +126,14 @@ class Order(models.Model):
     refund_approved = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.username}"
+         return f"{ self.user.username }"
 
     def get_total(self):
         total = 0
         for order_item in self.items.all():
             total += order_item.get_final_price()
-       
+        if self.coupon:
+            total -= self.coupon.amount
         return total
 
 class BillingAddress(models.Model):
@@ -149,7 +153,7 @@ class Payment(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{ user.username }"
+        return f"{ self.user.username }"
 
 
 class Coupon(models.Model):
