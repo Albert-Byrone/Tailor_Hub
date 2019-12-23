@@ -88,6 +88,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
+# sudo dpkg-reconfigure libdvd-pkg
 
 ROOT_URLCONF = 'mysite.urls'
 
@@ -181,12 +182,12 @@ STAR_RATINGS_STAR_WIDTH= 15
 
 STRIPE_PUBLISHABLE_KEY = 'pk_test_JWnXNw7PgQEDk3tjqJ1LhDdn0023rfz56O'
 STRIPE_SECRET_KEY = 'sk_test_BTbvf058piXBH7FOmDcsMexP00df2WwTPo'
-if DEBUG:
-    STRIPE_PUBLISHABLE_KEY = 'pk_test_JWnXNw7PgQEDk3tjqJ1LhDdn0023rfz56O'
-    STRIPE_SECRET_KEY = 'sk_test_BTbvf058piXBH7FOmDcsMexP00df2WwTPo'
-else:
-    STRIPE_PUBLISHABLE_KEY = 'pk_test_JWnXNw7PgQEDk3tjqJ1LhDdn0023rfz56O'
-    STRIPE_SECRET_KEY = 'sk_test_BTbvf058piXBH7FOmDcsMexP00df2WwTPo'
+# if DEBUG:
+#     STRIPE_PUBLISHABLE_KEY = 'pk_test_JWnXNw7PgQEDk3tjqJ1LhDdn0023rfz56O'
+#     STRIPE_SECRET_KEY = 'sk_test_BTbvf058piXBH7FOmDcsMexP00df2WwTPo'
+# else:
+#     STRIPE_PUBLISHABLE_KEY = 'pk_test_JWnXNw7PgQEDk3tjqJ1LhDdn0023rfz56O'
+#     STRIPE_SECRET_KEY = 'sk_test_BTbvf058piXBH7FOmDcsMexP00df2WwTPo'
 
 
 
