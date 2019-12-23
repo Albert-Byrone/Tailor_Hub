@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from .models import *
+from .forms import * 
 from django.contrib.auth import login, authenticate
 from django.utils import timezone
 from django.views.generic import ListView,DetailView,View
@@ -69,15 +70,15 @@ class CheckoutView(View):
             context = {
                 'form': form,
                 'Couponform':'Couponform',
-                'order':order
+                'order':order,
+                # 'DISPLAY_COUPON_FORM':True
             }
+            
             return render(self.request,'checkout.html',locals())
         except ObjectDoesNotExist:
             messages.info(self.request,"You do not have an active order ")
             return redirect("tailor:checkout")
         
-        
-    @login_required(login_url='/accounts/login')
     def post(self,*args,**kwargs):
         form= CheckoutForm(self.request.POST or None)
         try:
@@ -106,98 +107,123 @@ class CheckoutView(View):
                 elif payment_option == 'P':
                     return redirect('tailor:payment',payment_option='paypal')
                 else:
-                    messages.error(self.request,"Invalid payment option selected ")
+                    messages.warning(self.request,"Invalid payment option selected ")
                     return redirect('tailor:checkout')   
         except ObjectDoesNotExist:
-            messages.error(self.request,"You do not have an active order")
+            messages.warning(self.request,"You do not have an active order")
             return redirect("tailor:order-summary")
 
 
 class PaymentView(View):
     def get(self,*args,**kwargs):
         order = Order.objects.get(user=self.request.user,is_ordered=False)
-        context = {
-            'order':order
-        }
-        return render(self.request,"payment.html",context)
+        if order.billing_address:
+            context = {
+                'order':order,
+                # 'DISPLAY_COUPON_FORM':False
+            }
+            return render(self.request,"payment.html",context)
+        else:
+            messages.warning(self.request,"You have not added any address")
+            return redirect("tailor:checkout")
 
     def post(self,*args,**kwargs):
-
         order = Order.objects.get(user=self.request.user,is_ordered=False)
-        token = self.request.POST.get('stripeToken')
-        print(token)
-        amount = order.get_total()
-        amountt =  order.get_total()
-        print(amount,"amount")
-        print(amountt,"amountttt")
-        try:
+        form = PaymentForm(self.request.POST)
+        userprofile = Profile.objects.get(user=self.request.user)
+        if form.is_valid():
+            token = form.cleaned_data.get('stripeToken')
+            print(token,"aaaaaaaaaaaaaaa")
+            save = form.cleaned_data.get('save')
+            use_default = form.cleaned_data.get('user_default')
 
-            charge = stripe.Charge.create(
-                amount=amount,
-                currency="usd",
-                source=token,
-                
-                )
-            #create payment
-            payment = Payment()
-            payment.stripe_charge_id = charge.id
-            payment.user = self.request.user
-            payment.amount = order.get_total()
-            payment.save()
+            if save:
+                if userprofile.stripe_customer.id !='' and userprofile.stripe_customer_id is not None:
+                    customer = stripe.Customer.retrieve(
+                        userprofile.stripe_customer_id
+                    )
+                    customer.source.create(source=token)
+                else:
+                    customer = stripe.Customer.create(
+                        email=self.request.user
+                    )
+                    customer.source.create(source=token)
+                    userprofile.stripe_customer_id = customer['id']
+                    userprofile.one_click_purchasing = True
+                    userprofile.save()
+            amount = int(order.get_total() * 100)
+            try:
+                if use_default or save:
+                    #charge the customer
+                    charge = stripe.Charge.create(
+                        amount = amount,
+                        currency = "usd",
+                        source = token 
+                    )
+                else:
+                    #charge off the token
+                    charge = stripe.Charge.create(
+                        amount= amount,
+                        currency = "usd",
+                        source= token
+                    )
+                payment = Payment()
+                payment.stripe_charge_id = charge.id
+                payment.user = self.request.user
+                payment.amount = order.get_total()
+                payment.save()
 
-            #assign payment to the order
+                #assign payment to the order
 
-            order_items = order.items.all()
-            order_items.update(is_ordered=True)
-            for item in order_items:
-                item.save()
+                order_items = order.items.all()
+                order_items.update(is_ordered=True)
+                for item in order_items:
+                    item.save()
 
-            order.is_ordered = True
-            order.payment = payment
-            order.ref_code = create_ref_code()
-            order.save()  
-            messages.success(self.request,"You order was succesfull")
-            return redirect("/")
-        except stripe.error.CardError as e:
-            body = e.json_body
-            err = body.get('error',{})
-            messages.error(self.request,f"{ err.get('message')}")
-            return redirect("/")
+                order.is_ordered = True
+                order.payment = payment
+                order.ref_code = create_ref_code()
+                order.save()  
+                messages.success(self.request,"You order was succesfull")
+                return redirect("/")
+            except stripe.error.CardError as e:
+                body = e.json_body
+                err = body.get('error',{})
+                messages.warning(self.request,f"{ err.get('message')}")
+                return redirect("/")
+            except stripe.error.RateLimitError as e:
+            # Too many requests made to the API too quickly
+                messages.warning(self.request,"Rate linit error ")
+                return redirect("/")
+            except stripe.error.InvalidRequestError as e:
+            # Invalid parameters were supplied to Stripe's API
+                messages.warning(self.request,f"error occurred {e}")
+                return redirect("/")
+            except stripe.error.AuthenticationError as e:
+            # Authentication with Stripe's API failed
+            # (maybe you changed API keys recently)
+                messages.warning(self.request,"Not authenticated ")
+                return redirect("/")
+            except stripe.error.APIConnectionError as e:
+            # Network communication with Stripe failed
+                messages.warning(self.request,"Network error")
+                return redirect("/")
 
-        except stripe.error.RateLimitError as e:
-        # Too many requests made to the API too quickly
-            messages.error(self.request,"Rate linit error ")
-            return redirect("/")
+            except stripe.error.StripeError as e:
+            # Display a very generic error to the user, and maybe send
+            # yourself an email
+                messages.warning(self.request,"Something went wrong..You were not charged.Try again")
+                return redirect("/")
 
-        except stripe.error.InvalidRequestError as e:
-        # Invalid parameters were supplied to Stripe's API
-            messages.error(self.request,f"error occurred {e}")
-            return redirect("/")
-
-        except stripe.error.AuthenticationError as e:
-        # Authentication with Stripe's API failed
-        # (maybe you changed API keys recently)
-            messages.error(self.request,"Not authenticated ")
-            return redirect("/")
-
-        except stripe.error.APIConnectionError as e:
-        # Network communication with Stripe failed
-            messages.error(self.request,"Network error")
-            return redirect("/")
-
-        except stripe.error.StripeError as e:
-        # Display a very generic error to the user, and maybe send
-        # yourself an email
-            messages.error(self.request,"Something went wrong..You were not charged.Try again")
-            return redirect("/")
-
-        except Exception as e:
-        # Something else happened, completely unrelated to Stripe
-            messages.error(self.request,"Its something wrong,We are working on it")
-            return redirect("/")
+            except Exception as e:
+            # Something else happened, completely unrelated to Stripe
+                messages.warning(self.request,"Its something wrong,We are working on it")
+                return redirect("/")
       
-       
 
+
+
+        
 
 class OrderSummaryView(LoginRequiredMixin, View):
     def get(self,*args,**kwargs):
@@ -209,7 +235,7 @@ class OrderSummaryView(LoginRequiredMixin, View):
             }
             return render(self.request,'order_summary.html',locals())
         except ObjectDoesNotExist:
-            messages.error(self.request,"You do not have an active order")
+            messages.warning(self.request,"You do not have an active order")
             return redirect("/")
 
 @login_required(login_url='/accounts/login')
@@ -238,7 +264,7 @@ def profile(request,**kwargs):
     return render(request, 'profile/profile.html', locals())
 
 
-@login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def user_profile(request, username):
     user_prof = get_object_or_404(User, username=username)
     if request.user == user_prof:
@@ -261,7 +287,7 @@ class ItemDetailView(DetailView):
     template_name = 'product-page.html'
 
 
-login_required(login_url='/accounts/login')
+# login_required(login_url='/accounts/login')
 def add_to_cart(request, pk):
     item = get_object_or_404(Item,pk=pk)
     order_item,created = OrderItem.objects.get_or_create(
@@ -289,7 +315,7 @@ def add_to_cart(request, pk):
         messages.info(request,"Addded successfully" )
         return redirect("tailor:order-summary")
 
-login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def remove_from_cart(request,pk):
     item = get_object_or_404(Item,pk=pk)
     order_qs = Order.objects.filter(user= request.user,is_ordered=False)
@@ -314,12 +340,12 @@ def remove_from_cart(request,pk):
 
 
 
-login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def remove_single_item_from_cart(request,pk):
     item = get_object_or_404(Item,pk=pk)
     order_qs = Order.objects.filter(user= request.user,is_ordered=False)
     if order_qs.exists():
-        order = order_qs[0]\
+        order = order_qs[0]
         # check if the item exist in thecart
         if order.items.filter(item__id=item.id).exists():
             order_item = OrderItem.objects.filter(
@@ -340,6 +366,7 @@ def remove_single_item_from_cart(request,pk):
     else:
         messages.info(request,"You do not have an active order ")
         return redirect("tailor:product")
+
 def get_coupon(request, code ):
     try:
         coupon = Coupon.objects.get(code=code)
@@ -348,24 +375,21 @@ def get_coupon(request, code ):
         messages.info(request,"Invalid Coupon ")
         return redirect("tailor:checkout")
 
-def add_coupon(request):
-    if request.method == "POST":
-        form = CouponForm(request.POST or None)
-        if form.is_valid():  
-                try:
-                    code = form.cleaned_data.get('code')
-                    print(code,'eeeeeeeeeeeeeeeeeeeeeee')
-                    order = Order.objects.get(user=request.user,is_ordered=False)
-                    order.coupon = get_coupon(request,code)
-                    order.save()
-                    messages.success(request,"Coupon successfully Applied  ")
-                    return redirect("tailor:checkout")
-
-                except ObjectDoesNotExist:
-                    messages.info(request,"You do not have an active order ")
-                    return redirect("tailor:checkout")
-        return None
-                        
+class AddCouponView(View):
+    def post(self,*args,**kwargs):
+        form = CouponForm(self.request.POST or None)
+        if form.is_valid():
+            try:
+                code = form.cleaned_data.get('code')
+                order = Order.objects.get(user=self.request.user,is_ordered=False)
+                order.coupon = get_coupon(self.request,code)
+                order.save()
+                messages.success(self.request,"Coupon successfully Applied")
+                return redirect("tailor:checkout")
+            except ObjectDoesNotExist:
+                messages.info(self.request,"You do not have an active order ")
+                return redirect("tailor:checkout")
+             
 
 class RequestRefundView(View):
     def get(self,*args,**kwargs):
@@ -374,27 +398,29 @@ class RequestRefundView(View):
             'form':form
         }
         return render(self.request,"request_refund.html",locals())
-    def post(self,*args,**kwargs):
-        form = CouponForm(self.request.POST or None)
+
+        def post(self, *args, **kwargs):
+            form = RefundForm(self.request.POST)
         if form.is_valid():
-            ref_code =form.cleaned_data.get('ref_code')
+            ref_code = form.cleaned_data.get('ref_code')
             message = form.cleaned_data.get('message')
             email = form.cleaned_data.get('email')
-
-            #edit refund
+            # edit the order
             try:
                 order = Order.objects.get(ref_code=ref_code)
-                order.refund_requested =  True
+                order.refund_requested = True
                 order.save()
 
-                #store the refund
+                # store the refund
                 refund = Refund()
                 refund.order = order
                 refund.reason = message
-                refund.email=email
+                refund.email = email
                 refund.save()
-                messages.info(self.request,"Your order is successfull")
-                return redirect("tailor:request-refund")
+
+                messages.info(self.request, "Your request was received.")
+                return redirect("core:request-refund")
+
             except ObjectDoesNotExist:
-                messages.info(self.request,"This order doesnt exist")
-                return redirect("tailor:request-refund")
+                messages.info(self.request, "This order does not exist.")
+                return redirect("core:request-refund")
