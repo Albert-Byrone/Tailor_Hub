@@ -44,23 +44,12 @@ PAYMENT_OPTIONS=(
     ("P","Paypal")
 )
 class CheckoutForm(forms.Form):
-    street_address =  forms.CharField(widget= forms.TextInput(attrs={
-        'placeholder':'1234 Main St',
-        'class':'form-control',
-        'id':'address',
-        'type':'text'
-    }))
-    apartment_address =  forms.CharField(required=False,widget=forms.TextInput(attrs={
-        'placeholder':'Apartment or suite',
-        'class':'form-control',
-        'id':'address-2',
-        'type':'text'
-
-    }))
-    country = CountryField(blank_label='Select Country').formfield(widget=CountrySelectWidget(attrs={
+    shipping_address =  forms.CharField(required=False)
+    shipping_address2 =  forms.CharField(required=False)
+    shipping_country = CountryField(blank_label='Select Country').formfield(widget=CountrySelectWidget(attrs={
         'class':'custom-select d-block w-100'
     }))
-    zipcode =  forms.CharField(widget=forms.TextInput(attrs={
+    shipping_zipcode =  forms.CharField(widget=forms.TextInput(attrs={
         'class':'form-control'
     }))
     same_billing_address = forms.BooleanField(required=False)
@@ -77,5 +66,12 @@ class CouponForm(forms.Form):
 
 class RefundForm(forms.Form):
     ref_code = forms.CharField()
-    message =  forms.CharField(widget=forms.Textarea)
+    message =  forms.CharField(widget=forms.Textarea(attrs={
+        'rows':5,
+    }))
     email =  forms.EmailField()
+
+class PaymentForm(forms.Form):
+    stripeToken = forms.CharField(required=False)
+    save = forms.BooleanField(required=False)
+    use_default = forms.BooleanField(required=False)
