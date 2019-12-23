@@ -17,7 +17,7 @@
                   <th scope="col">Quantity</th>
                   <th scope="col">Total</th>
                  
-                </tr>
+                </tr> 
               </thead>
               <tbody>
                 {% for order_item in order.items.all %}
@@ -38,9 +38,9 @@
                         ${{ order_item.get_total_price }}
 
                     {% endif %}
-                    <a style="color:red;" href="{% url 'remove-from-cart' order_item.item.pk %">
+                    <!-- <a style="color:red;" href="{% url 'remove-from-cart' order_item.item.pk %">
                         <i class="fas fa-trash float-right"></i>
-                    </a>
+                    </a> -->
                 
                   </td>
                   {% empty %}
@@ -59,15 +59,13 @@
                 <tr>    <td colspan="4"><b>Total Amount</b></td>
                         <td><b>${{order.get_total}}</b></td>
                 </tr>
-
+                {% endif %}
                 <tr>   
                     <td colspan="5">
-                        <a class=" btn btn-primary float-right ml-2"href="/">Continue Shopping</a>
-                        <a class=" btn btn-warning float-right"href="/checkout/">Proceed to Checkout</a>
+                        <a class=" btn btn-primary btn-md my-0 p float-right ml-2"href="/">Continue Shopping</a>
+                        <a class=" btn btn-primary btn-md my-0 p float-right"href="/checkout/">Proceed to Checkout</a>
                     </td>
-            </tr>
-                {% endif %}
-
+              </tr>
               </tbody>
             </table>
           

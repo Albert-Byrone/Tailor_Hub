@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 
+
 <div class="container dark-grey-text mt-5">
 
     <div class="row wow fadeIn">
@@ -39,7 +40,10 @@
             <a href="{% url 'tailor:remove-from-cart' object.pk %}" class="btn btn-danger btn-md my-0 p">Remove  cart
                 <i class="fas fa-shopping-cart ml-1"></i>
               </a>
+            
+              <a></a>
         </div>
+       
       </div>
     </div>
     <hr>
@@ -63,5 +67,5 @@
       </div>
     </div>
   </div>
-
+  
 {% endblock %}
