@@ -3,7 +3,7 @@
 {% load static %}
 {% load ratings %}
 {% block content%}
-<link rel="stylesheet" href="{% static 'star-ratings/css/star-ratings.css' %}">
+
   <main>
     <div class="container">
       <section class="text-center mb-4">
@@ -49,7 +49,7 @@
                     {% endif %}
                   </strong>
                 </h4>
-                {% ratings item %}
+             
 
               </div>
             </div>
@@ -93,5 +93,5 @@
     
     </div>
   </main>
-  <script type="text/javascript" src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
+
 {% endblock%}
