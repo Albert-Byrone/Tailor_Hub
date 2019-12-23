@@ -12,6 +12,7 @@ from .views import (
     CheckoutView,
     PaymentView,
     RequestRefundView,
+    AddCouponView,
 )
 from . import views
     
@@ -26,7 +27,7 @@ urlpatterns = [
     url(r'^order-summary/$',OrderSummaryView.as_view(), name='order-summary'),
     url(r'checkout/$', CheckoutView.as_view(), name='checkout'),
     url(r'^add-to-cart/(?P<pk>\d+)/$',add_to_cart, name='add-to-cart'),
-    url(r'^add-coupon/$',add_to_cart, name='add-coupon'),
+    url(r'^add-coupon/$',AddCouponView.as_view(), name='add-coupon'),
     url(r'^remove-from-cart/(?P<pk>\d+)/$',remove_from_cart, name='remove-from-cart'),
     url(r'^remove_single_item_from_cart/(?P<pk>\d+)/$',remove_single_item_from_cart, name='remove_single_item_from_cart'),
     url(r'payment/(?P<payment_option>)', PaymentView.as_view(), name='payment'),
