@@ -31,6 +31,10 @@ class OrderAdmin(admin.ModelAdmin):
         'refund_requested',
         'refund_approved'
     ]
+    search_fields =[
+        'user__username',
+        'ref_code'
+    ]
     actions =[accept_refund]
 
 
