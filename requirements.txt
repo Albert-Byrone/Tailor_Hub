@@ -15,7 +15,7 @@ django-registration==2.4.1
 django-star-ratings==0.8.0
 idna==2.8
 gunicorn==19.9.0
-Pillow==6.2.1
+Pillow==8.2.0
 psycopg2==2.8.4
 python-dateutil==2.8.1
 python-decouple==3.3
